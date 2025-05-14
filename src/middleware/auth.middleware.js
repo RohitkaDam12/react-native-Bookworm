@@ -1,28 +1,28 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.model.js';
+import jwt from "jsonwebtoken";
+import User from "../models/User.model.js";
 
 const protectRoute = async (req, res, next) => {
   try {
-    const authHeader = req.header("Authorization");
+    const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No authentication token, access denied" });
+      return res.status(401).json({ message: "Not authorized, no token" });
     }
 
-    const token = authHeader.split(" ")[1]; // This avoids whitespace bugs
-
+    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password");
+
+    const user = await User.findById(decoded.userId).select("-password");
 
     if (!user) {
-      return res.status(401).json({ message: "Token is not valid" });
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
 
     req.user = user;
     next();
-
   } catch (error) {
-    console.log("Error in auth middleware:", error.message);
-    res.status(401).json({ message: "Not authorized, token failed" });
+    console.error("Error in protectRoute middleware:", error);
+    return res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 
