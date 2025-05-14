@@ -3,14 +3,14 @@ import User from '../models/User.model.js';
 
 const protectRoute = async (req, res, next) => {
   try {
-    // get the token from the header
-    const token = req.header("Authorization").replace("Bearer", "");
-    if (!token) {
+    const authHeader = req.header("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No authentication token, access denied" });
     }
-    // verify the token
+
+    const token = authHeader.split(" ")[1]; // This avoids whitespace bugs
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // find the user
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -26,4 +26,4 @@ const protectRoute = async (req, res, next) => {
   }
 };
 
-export default protectRoute; 
+export default protectRoute;
