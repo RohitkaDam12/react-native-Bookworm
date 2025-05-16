@@ -12,26 +12,37 @@ router.post("/", protectRoute, async (req, res) => {
   try {
     const { title, caption, rating, image } = req.body;
 
-    if(!title || !caption || !rating || !image) {
+    if (!title || !caption || !rating || !image) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    //upload image to cloudinary
-    const uploadResponse = await cloudinary.uploader.upload(image);
-    const imageUrl = uploadResponse.secure_url;
-    // save to database
+    // ✅ Validate image data URL format
+    if (!image.startsWith("data:image/")) {
+      return res.status(400).json({ message: "Invalid image format" });
+    }
+
+    let uploadResponse;
+    try {
+      uploadResponse = await cloudinary.uploader.upload(image, {
+        folder: "book-recommendations", // Optional: Organize uploads
+      });
+    } catch (uploadError) {
+      console.error("Cloudinary error:", uploadError);
+      return res.status(500).json({ message: "Failed to upload image" });
+    }
+
     const newBook = new Book({
       title,
       caption,
       rating,
-      image: imageUrl,
-      user: req.user._id, // Assuming you have user authentication middleware
+      image: uploadResponse.secure_url,
+      user: req.user._id,
     });
 
     await newBook.save();
     res.status(201).json(newBook);
   } catch (error) {
-    console.error("Error uploading book:", error);
+    console.error("Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
