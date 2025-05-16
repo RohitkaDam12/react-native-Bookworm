@@ -26,6 +26,7 @@ router.post("/", protectRoute, async (req, res) => {
       image: imageUrl,
       user: req.user._id, // Assuming you have user authentication middleware
     });
+    
     await newBook.save();
     res.status(201).json(newBook);
   } catch (error) {

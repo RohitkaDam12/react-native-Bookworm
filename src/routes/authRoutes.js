@@ -11,7 +11,7 @@ const generateToken = (userId) => {
     expiresIn: "15d",
   });
 };
-
+  
 // REGISTER Route
 router.post('/register', async (req, res) => {
   try {
